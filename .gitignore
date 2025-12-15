@@ -1,0 +1,17 @@
+# Security
+.env
+
+# Database
+*.sqlite
+*.db
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Dependencies
+vendor/
+node_modules/
+
+# Logs
+*.log
