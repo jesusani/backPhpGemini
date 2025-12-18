@@ -61,6 +61,13 @@ class ApiClient {
         // En el modo interno, pasamos data para que el controller no lea php://input
         return $this->request('POST', 'register', $data);
     }
+
+    public function resetLedger($startId, $csrfToken) {
+        return $this->request('POST', 'admin_reset', [
+            'startId' => $startId,
+            'csrf_token' => $csrfToken
+        ]);
+    }
 }
 
 // Configuración

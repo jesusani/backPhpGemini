@@ -3,7 +3,43 @@
 ini_set('display_errors', 1); 
 error_reporting(E_ALL);
 
+
+
+if (isset($_SESSION['registrado']) && $_SESSION['registrado'] == 'true') {
+		
+		echo "<script>setTimeout('document.location.reload()',1000*60*16); </script>";
+		$minutos = ((($_SESSION['duracion']) - (time())) );
+		
+		
+		if ($minutos < 1) {
+			echo 'Más de 15 minutos de diferencia';
+			echo "salimos de la sesion";
+			session_destroy();
+			
+			unset($_COOKIE['admin']);
+			unset($_COOKIE['usuario']);
+			unset($_COOKIE['contraseña']);
+			
+			setcookie('admin', null, -1, '/');
+			setcookie('usuario', null, -1, '/');
+			setcookie('contraseña', null, -1, '/');
+		
+			echo "<script>";
+			echo "  window.location.replace('./index.php');";
+			echo "</script>";
+						
+		} else {
+				
+			$tiempo = time()+900;
+			$_SESSION['duracion'] = $tiempo;
+			
+		} 
+
+
 require_once 'api_client.php';
+
+
+
 try {
     $response = $api->getList();
     $invoices = ($response['code'] === 200) ? $response['body']['records'] : [];
@@ -75,3 +111,8 @@ try {
     </div>
 </body>
 </html>
+<?php
+	}else{
+		echo "No estás autorizado";
+	}
+    ?>

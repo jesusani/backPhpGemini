@@ -10,6 +10,32 @@ require_once __DIR__ . '/../utils/Security.php';
 $csrfToken = Security::generateCsrfToken();
 $error = '';
 $success = '';
+$invoice = null;
+$amount = null;
+$prefill = [];
+
+// Lógica de Rectificación (Prefill)
+if (isset($_GET['rectify_id'])) {
+    $rectId = (int)$_GET['rectify_id'];
+    $resp = $api->getInvoice($rectId);
+    if ($resp['code'] === 200) {
+        $source = $resp['body']['invoice'];
+        // Parsear entry_data para obtener detalles
+        $data = is_array($source['entry_data']) ? $source['entry_data'] : json_decode($source['entry_data'], true);
+        
+        $prefill = [
+            'tipo' => 'RECTIFICATIVA',
+            'originalInvoiceId' => $rectId,
+            'recipientName' => $data['recipient']['name'] ?? $source['recipient_name'],
+            'recipientNIF' => $data['recipient']['nif'] ?? $source['recipient_nif'],
+            'recipientAddress' => $data['recipient']['address'] ?? '',
+            'concept' => 'Rectificación: ' . ($data['details']['items'][0]['concept'] ?? $data['concept'] ?? ''),
+            'baseAmount' => ($data['breakdown']['baseAmount'] ?? $data['amount'] ?? 0) * -1, // Sugerir negativo
+            'vatRate' => $data['breakdown']['vatRate'] ?? 21,
+            'rectificationReason' => ''
+        ];
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validar CSRF en el Frontend antes de enviar (Doble capa)
@@ -18,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Basic formatting
         $payload = [
-            'type' => $_POST['type'],
+            'type' => $_POST['tipo'], // Map 'tipo' (Frontend) to 'type' (Backend)
             'concept' => $_POST['concept'],
             'amount' => (float)$_POST['amount'],
             'recipientNIF' => $_POST['recipientNIF'],
@@ -72,71 +98,131 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
                 
                 <div class="form-group">
-                    <label>Tipo de Asiento</label>
-                    <select name="type" id="typeSelect" onchange="toggleRectificativa()">
-                        <option value="INITIAL">Factura Ordinaria (INITIAL)</option>
-                        <option value="RECTIFICATIVA">Factura Rectificativa</option>
+                    <label>Tipo de Registro</label>
+                    <select id="tipoSelect" name="tipo" onchange="toggleFields()">
+                        <option value="INITIAL" <?= (($_POST['tipo']??($prefill['tipo']??'')) === 'INITIAL') ? 'selected' : '' ?>>Factura Original</option>
+                        <option value="RECTIFICATIVA" <?= (($_POST['tipo']??($prefill['tipo']??'')) === 'RECTIFICATIVA') ? 'selected' : '' ?>>Factura Rectificativa</option>
                     </select>
                 </div>
 
+                <!-- Seccion Económica -->
                 <div class="form-group">
-                    <label>Cliente / Receptor</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="nifInput" name="recipientNIF" placeholder="NIF (ej. B12345678)" required style="flex:1;" pattern="^[A-Za-z0-9]{9}$" title="Debe tener 9 caracteres alfanuméricos" oninput="validateNifInfo()">
-                        <input type="text" name="recipientName" placeholder="Razón Social" required style="flex:2;">
-                    </div>
-                    <small id="nifFeedback" style="display:none; color:var(--danger); font-size:12px;">Formato de NIF inválido (9 caracteres requeridos)</small>
+                    <label for="amount">Base Imponible (€)</label>
+                    <input type="number" id="amount" name="amount" step="0.01" required placeholder="Ej: 100.00" value="<?= htmlspecialchars($_POST['amount'] ?? ($_GET['amount'] ?? ($prefill['baseAmount']??''))) ?>">
                 </div>
 
                 <div class="form-group">
-                    <label>Concepto</label>
-                    <input type="text" name="concept" placeholder="Descripción del servicio..." required minlength="5">
+                    <label for="vatRate">Tipo de IVA</label>
+                    <select id="vatRate" name="vatRate" onchange="toggleExemptReason()">
+                        <?php 
+                        $currentRate = $_POST['vatRate'] ?? ($prefill['vatRate'] ?? '0'); 
+                        ?>
+                         <option value="0" <?= $currentRate == '0' ? 'selected' : '' ?>>Exento (0%)</option>
+                        <option value="21" <?= $currentRate == '21' ? 'selected' : '' ?>>General (21%)</option>
+                        <option value="10" <?= $currentRate == '10' ? 'selected' : '' ?>>Reducido (10%)</option>
+                        <option value="4" <?= $currentRate == '4' ? 'selected' : '' ?>>Superreducido (4%)</option>
+                         </select>
+                </div>
+
+                <div class="form-group" id="exemptReasonGroup" style="display:none;">
+                     <label for="exemptReason">Motivo de Exención</label>
+                     <select id="exemptReason" name="exemptReason">
+                           <?php 
+                        $currentexemptReason = $_POST['exemptReason'] ?? ($prefill['exemptReason'] ?? 'E1'); 
+                        ?>
+                         <option value="E1" <?= $currentexemptReason == 'E1' ? 'selected' : '' ?>>Art. 20 LIVA (Exentas Operaciones Interiores)</option>
+                         <option value="E2" <?= $currentexemptReason == 'E2' ? 'selected' : '' ?>>Art. 21 LIVA (Exportaciones)</option>
+                         <option value="E3" <?= $currentexemptReason == 'E3' ? 'selected' : '' ?>>Art. 25 LIVA (Entregas Intracomunitarias)</option>
+                     </select>
+                </div>
+
+                <!-- Datos Receptor -->
+                <div class="form-group">
+                    <label for="recipientNIF">NIF Receptor (Opcional)</label>
+                    <input type="text" id="recipientNIF" name="recipientNIF" 
+                           pattern="^[A-Za-z0-9]{9}$"
+                           title="Debe tener 9 caracteres alfanuméricos"
+                           oninput="validateNifInfo(this)"
+                           value="<?= htmlspecialchars($_POST['recipientNIF'] ?? ($prefill['recipientNIF']??'')) ?>">
+                    <small id="nifFeedback" style="display:block; height:15px; font-size:11px; margin-top:2px;"></small>
                 </div>
 
                 <div class="form-group">
-                    <label>Importe Total (€)</label>
-                    <input type="number" step="0.01" name="amount" placeholder="0.00" required min="0.01">
+                    <label for="recipientName">Nombre / Razón Social Receptor</label>
+                    <input type="text" id="recipientName" name="recipientName" required value="<?= htmlspecialchars($_POST['recipientName'] ?? ($prefill['recipientName']??'')) ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="recipientAddress">Dirección Receptor (Factura E.)</label>
+                    <input type="text" id="recipientAddress" name="recipientAddress" placeholder="Dirección completa del cliente" value="<?= htmlspecialchars($_POST['recipientAddress'] ?? ($prefill['recipientAddress']??'')) ?>">
+                </div>
+
+                <div class="form-group">
+                    <label for="concept">Concepto</label>
+                    <input type="text" id="concept" name="concept" placeholder="Descripción del servicio..." required minlength="5" value="<?= htmlspecialchars($_POST['concept'] ?? ($prefill['concept']??'')) ?>">
                 </div>
 
                 <!-- Rectificativa Fields -->
-                <div id="rectFields" style="display:none; border-top:1px solid #30363d; padding-top:20px; margin-top:20px;">
-                    <h3 style="font-size:16px; margin-bottom:15px; color:var(--accent);">Datos Rectificación</h3>
+                <div id="rectificativaFields" style="display:none; border-left: 2px solid var(--warning); padding-left: 15px; margin-top: 20px;">
+                    <h3 style="color:var(--warning); font-size:16px;">Datos de Rectificación</h3>
+                    
                     <div class="form-group">
-                        <label>ID Factura Original</label>
-                        <input type="number" name="originalInvoiceId" placeholder="ID de la factura a corregir">
+                        <label>Factura Original ID</label>
+                        <input type="number" name="originalInvoiceId" placeholder="ID de la factura original" value="<?= htmlspecialchars($_POST['originalInvoiceId'] ?? ($prefill['originalInvoiceId']??'')) ?>">
                     </div>
+
                     <div class="form-group">
                         <label>Motivo</label>
-                        <input type="text" name="reason" placeholder="Razón de la corrección">
+                        <textarea name="reason" placeholder="Explique el motivo de la corrección..."><?= htmlspecialchars($_POST['reason'] ?? ($prefill['rectificationReason']??'')) ?></textarea>
                     </div>
                 </div>
 
-                <div style="margin-top:30px;">
-                    <button type="submit" class="btn" style="width:100%; padding:12px;">Registrar Asiento</button>
-                </div>
+                <button type="submit" class="btn" style="width:100%; margin-top:20px;">Registrar Factura</button>
             </form>
         </div>
     </div>
 
     <script>
-        function toggleRectificativa() {
-            var type = document.getElementById('typeSelect').value;
-            var fields = document.getElementById('rectFields');
-            fields.style.display = (type === 'RECTIFICATIVA') ? 'block' : 'none';
+        function toggleFields() {
+            var tipo = document.getElementById('tipoSelect').value;
+            var fields = document.getElementById('rectificativaFields');
+            fields.style.display = (tipo === 'RECTIFICATIVA') ? 'block' : 'none';
         }
 
+        function toggleExemptReason() {
+            var rate = document.getElementById('vatRate');
+            var reasonGroup = document.getElementById('exemptReasonGroup');
+            var exemptReason = document.getElementById('exemptReason');
+            
+            if (rate && rate.value == '0') {
+                reasonGroup.style.display = 'block';
+                exemptReason.required = true;
+            } else {
+                reasonGroup.style.display = 'none';
+                exemptReason.required = false;
+                exemptReason.value = '';
+            }
+        }
+        
+        // Init on load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleExemptReason();
+            toggleFields(); // Auto-show rect fields if selected
+        });
+
         function validateNifInfo() {
-            var nif = document.getElementById('nifInput').value;
+            var nif = document.getElementById('recipientNIF').value;
             var feedback = document.getElementById('nifFeedback');
             // Regex JS simple para feedback visual (coincide con backend)
             var regex = /^[A-Za-z0-9]{9}$/;
             
             if (nif.length > 0 && !regex.test(nif)) {
                 feedback.style.display = 'block';
-                document.getElementById('nifInput').style.borderColor = 'var(--danger)';
+                feedback.innerText = 'Formato incorrecto (9 caracteres)';
+                document.getElementById('recipientNIF').style.borderColor = 'var(--danger)';
             } else {
                 feedback.style.display = 'none';
-                document.getElementById('nifInput').style.borderColor = (nif.length > 0) ? 'var(--success)' : 'var(--border-color)';
+                document.getElementById('recipientNIF').style.borderColor = (nif.length > 0) ? 'var(--success)' : 'var(--border-color)';
             }
         }
     </script>
