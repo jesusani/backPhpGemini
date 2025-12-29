@@ -22,6 +22,7 @@ $invoice = ($response['code'] === 200) ? $response['body']['invoice'] : null;
                     <h1>Detalle Asiento #<?= $id ?></h1>
                 </div>
                 <div>
+                    <a href="create.php?rectify_id=<?= $id ?>" class="btn btn-warning" style="margin-right:10px;">📉 Crear Rectificativa</a>
                     <a href="../index.php?action=download&id=<?= $id ?>" class="btn btn-secondary" target="_blank" style="margin-right:10px;">⬇ JSON</a>
                     <button onclick="window.print()" class="btn">🖨 Imprimir PDF</button>
                 </div>
@@ -75,6 +76,19 @@ $invoice = ($response['code'] === 200) ? $response['body']['invoice'] : null;
                     </div>
                     <?php endif; ?>
                 </div>
+            </div>
+
+            <div class="card" style="text-align:center;">
+                <h3>Código QR VeriFactu</h3>
+                <p style="color:var(--text-secondary); font-size:12px; margin-bottom:15px;">
+                    Este código permite al paciente verificar la autenticidad de la factura en la Agencia Tributaria.
+                </p>
+                <div style="position:relative; display:inline-block; background:#fff; padding:10px; border-radius:8px; border:1px solid var(--border-color);">
+                    <img src="../index.php?action=qr&id=<?= $id ?>" alt="QR Verificación AEAT" width="180" style="display:block;">
+                    <img src="../../imagenes/logoeve.jpg" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:40px; height:auto; background:white; padding:2px; border:1px solid #eee;">
+                </div>
+                <br><br>
+                <small style="color:var(--text-secondary);">Enlace de consulta: <a href="https://www.agenciatributaria.es/consultafactura" target="_blank">AEAT Conecta</a></small>
             </div>
 
             <div class="card">

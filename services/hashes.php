@@ -30,5 +30,3 @@
         // Si hay un registro, devuelve su hash. Si no, devuelve el hash de Génesis.
         return $result ? $result['current_hash'] : str_repeat('0', 64);
     }
-
-?>

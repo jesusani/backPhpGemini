@@ -209,4 +209,16 @@ select:focus {
         color: #000 !important;
         background: none !important;
     }
+
+    /* Mostrar el QR al imprimir */
+    div[style*="position:relative"] {
+        display: block !important;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    img[alt="QR Verificación AEAT"],
+    img[src*="logoeve.jpg"] {
+        display: block !important;
+    }
 }

@@ -51,5 +51,3 @@
             die("Error de conexión/inicialización de DB: " . $e->getMessage());
         }
     }
-    
-?>

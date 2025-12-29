@@ -116,6 +116,3 @@ switch ($action) {
 
 // Devolver la respuesta al cliente React
 echo json_encode($response);
-
-
-?>

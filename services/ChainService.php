@@ -32,6 +32,8 @@ class ChainService {
             'userId' => $userId, 
             'recipientNIF' => $inputData['recipientNIF'] ?? null,
             'recipientName' => $inputData['recipientName'] ?? null,
+            'fechacita' => $inputData['fechacita'] ?? null,
+            'horacita' => $inputData['horacita'] ?? null,
             'machine' => 'PHP_VTS_SERVER_1',
             'previousHash' => $previousHash,
             'machine' => 'PHP_VTS_SERVER_1',
@@ -95,4 +97,3 @@ class ChainService {
         return $this->model->getById($id);
     }
 }
-?>

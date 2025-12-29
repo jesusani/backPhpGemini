@@ -11,9 +11,14 @@ class Validator {
             $errors[] = "Campo 'type' es inválido o falta. Valores permitidos: INITIAL, RECTIFICATIVA.";
         }
 
-        // Amount (Strict Positive check)
-        if (!isset($data['amount']) || !is_numeric($data['amount']) || (float)$data['amount'] < 0) {
-             $errors[] = "Campo 'amount' es requerido y debe ser un número positivo.";
+        // Amount (Allow negative ONLY for RECTIFICATIVA)
+        if (!isset($data['amount']) || !is_numeric($data['amount'])) {
+             $errors[] = "Campo 'amount' es requerido y debe ser un número.";
+        } else {
+            $amount = (float)$data['amount'];
+            if ($data['type'] === 'INITIAL' && $amount < 0) {
+                $errors[] = "Las facturas originales (INITIAL) deben tener un importe positivo.";
+            }
         }
 
         // Concept
@@ -53,4 +58,3 @@ class Validator {
         return preg_match('/^[A-Z0-9]{9}$/', $nif);
     }
 }
-?>

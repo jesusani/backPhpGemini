@@ -173,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="form-group">
                         <label>Motivo</label>
-                        <textarea name="reason" placeholder="Explique el motivo de la corrección..."><?= htmlspecialchars($_POST['reason'] ?? ($prefill['rectificationReason']??'')) ?></textarea>
+                        <textarea name="reason" placeholder="Explique el motivo de la corrección..." required><?= htmlspecialchars($_POST['reason'] ?? ($prefill['rectificationReason']??'')) ?></textarea>
                     </div>
                 </div>
 
@@ -210,10 +210,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             toggleFields(); // Auto-show rect fields if selected
         });
 
+        function validateForm() {
+            var tipo = document.getElementById('tipoSelect').value;
+            var amount = parseFloat(document.getElementById('amount').value);
+            
+            if (tipo === 'INITIAL' && amount < 0) {
+                alert('Las facturas originales no pueden tener un importe negativo.');
+                return false;
+            }
+            
+            if (tipo === 'RECTIFICATIVA') {
+                var reason = document.getElementsByName('reason')[0].value;
+                if (reason.trim().length < 5) {
+                    alert('Por favor, indique un motivo de rectificación válido (mín. 5 caracteres).');
+                    return false;
+                }
+            }
+            return true;
+        }
+
         function validateNifInfo() {
             var nif = document.getElementById('recipientNIF').value;
             var feedback = document.getElementById('nifFeedback');
-            // Regex JS simple para feedback visual (coincide con backend)
             var regex = /^[A-Za-z0-9]{9}$/;
             
             if (nif.length > 0 && !regex.test(nif)) {

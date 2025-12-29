@@ -38,4 +38,3 @@ class Database {
         self::$instance->pdo = $pdoInstance;
     }
 }
-?>

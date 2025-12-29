@@ -7,7 +7,6 @@ require_once __DIR__ . '/utils/Security.php';
 Security::startSession();
 
 // 1. Headers & CORS
-header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *'); 
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
 header('Access-Control-Allow-Headers: Content-Type, X-User-ID, Authorization, X-Requested-With');
@@ -17,17 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
 
-// 2. Autoloading (Simple manual require for now)
+// 2. Controladores y enrutamiento
 require_once __DIR__ . '/controllers/InvoiceController.php';
-require_once __DIR__ . '/services/initializeDataBaseSchema.php'; // Legacy schema init for now
-
-// 3. Initialize DB Schema (Ensures valid state)
+require_once __DIR__ . '/services/initializeDataBaseSchema.php';
 initializeDatabaseSchema();
 
-// 4. Routing
 $action = $_GET['action'] ?? 'test';
+
+// Si no es una imagen QR, enviamos JSON por defecto
+if ($action !== 'qr') {
+    header('Content-Type: application/json');
+}
 
 $controller = new InvoiceController();
 $controller->handleRequest($action);
-
-?>

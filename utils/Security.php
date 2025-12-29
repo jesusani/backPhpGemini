@@ -35,5 +35,9 @@ class Security {
         }
         return $data;
     }
+
+    public static function generatePublicSignature($id, $currentHash) {
+        $secret = $_ENV['VTS_SECRET_KEY'] ?? 'VERIFACTU_PUBLIC_SECRET_2024';
+        return hash_hmac('sha256', $id . $currentHash, $secret);
+    }
 }
-?>

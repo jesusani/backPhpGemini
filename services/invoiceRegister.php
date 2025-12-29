@@ -129,4 +129,3 @@
             return ['error' => 'Fallo al registrar el asiento: ' . $e->getMessage()];
         }
     }
-?>

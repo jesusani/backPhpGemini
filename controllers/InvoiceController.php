@@ -2,6 +2,7 @@
 // controllers/InvoiceController.php
 require_once __DIR__ . '/../utils/Validator.php';
 require_once __DIR__ . '/../services/ChainService.php';
+require_once __DIR__ . '/../utils/Security.php';
 
 class InvoiceController {
     private $service;
@@ -25,6 +26,9 @@ class InvoiceController {
                 break;
             case 'get':
                 $this->get();
+                break;
+            case 'qr':
+                $this->qr();
                 break;
             case 'download':
                 $this->download();
@@ -126,6 +130,51 @@ class InvoiceController {
         }
     }
 
+    private function qr() {
+        $id = $_GET['id'] ?? null;
+        if (!$id || !is_numeric($id)) {
+            http_response_code(400);
+            die("ID inválido");
+        }
+
+        $invoice = $this->service->getInvoiceById((int)$id);
+        if (!$invoice) {
+            http_response_code(404);
+            die("Factura no encontrada");
+        }
+
+        $meta = json_decode($invoice['entry_data'], true);
+        
+        // Generar enlace al Portal Público con firma de seguridad
+        $signature = Security::generatePublicSignature($id, $invoice['current_hash']);
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+        $host = $_SERVER['HTTP_HOST'];
+        
+        // Asumimos que portal.php está en la raíz de /facturas/
+        $qrData = $protocol . $host . dirname($_SERVER['SCRIPT_NAME']) . "/portal.php?id=" . $id . "&s=" . $signature;
+        
+        $qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" . urlencode($qrData) . "&qzone=1";
+        
+        // Limpiamos cualquier salida previa (espacios en blanco, etc)
+        if (ob_get_length()) ob_clean();
+        
+        header('Content-Type: image/png');
+        header('Content-Length: ' . $this->getRemoteFileSize($qrUrl));
+        readfile($qrUrl);
+        exit;
+    }
+
+    private function getRemoteFileSize($url) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($ch, CURLOPT_HEADER, TRUE);
+        curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+        $data = curl_exec($ch);
+        $size = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+        curl_close($ch);
+        return $size;
+    }
+
     private function download() {
         $id = $_GET['id'] ?? null;
         if (!$id || !is_numeric($id)) {
@@ -158,4 +207,3 @@ class InvoiceController {
         exit;
     }
 }
-?>
