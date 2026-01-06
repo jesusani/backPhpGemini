@@ -109,6 +109,16 @@ switch ($action) {
             'ledger' => invoicesList()];
         break;
 
+    case 'reset_db':
+        // SOLO PARA DESARROLLO - BORRA LA BASE DE DATOS
+        if (resetDatabaseSchema()) {
+            $response = ['message' => 'Base de datos reiniciada correctamente.'];
+        } else {
+             http_response_code(500);
+            $response = ['error' => 'Error al reiniciar la base de datos.'];
+        }
+        break;
+
     default:
         $response = ['error' => 'Acción no válida o datos incompletos.'];
         break;

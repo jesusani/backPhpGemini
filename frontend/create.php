@@ -7,6 +7,9 @@ require_once 'api_client.php';
 // Necesitamos acceso a Security para generar el token
 require_once __DIR__ . '/../utils/Security.php';
 
+// GLOBAL DEBUG LOG
+file_put_contents(__DIR__ . '/../../debug_vts.log', date('Y-m-d H:i:s') . " Create.php Accessed. Method: " . $_SERVER['REQUEST_METHOD'] . "\n", FILE_APPEND);
+
 $csrfToken = Security::generateCsrfToken();
 $error = '';
 $success = '';
@@ -38,9 +41,12 @@ if (isset($_GET['rectify_id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    file_put_contents(__DIR__ . '/../../debug_vts.log', date('Y-m-d H:i:s') . " Create.php POST: " . print_r($_POST, true) . "\n", FILE_APPEND);
+    
     // Validar CSRF en el Frontend antes de enviar (Doble capa)
     if (!Security::validateCsrfToken($_POST['csrf_token'] ?? '')) {
-        $error = 'Error de seguridad: Sesión expirada o token inválido.';
+        file_put_contents(__DIR__ . '/../../debug_vts.log', date('Y-m-d H:i:s') . " CSRF Fail. Session: " . ($_SESSION['csrf_token']??'null') . " POST: " . ($_POST['csrf_token']??'null') . "\n", FILE_APPEND);
+        $error = 'Error de seguridad: Sesión expirada o token inválido. Intente recargar la página.';
     } else {
         // Basic formatting
         $payload = [
@@ -93,6 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?= htmlspecialchars($error) ?>
                 </div>
             <?php endif; ?>
+
+            <!-- Debug Indicator (Removed for Production feel, but keeping simple marker) -->
+            <!-- <div style="font-size:10px; color:#ccc;">Form Updated: <?= date('H:i') ?></div> -->
 
             <form method="POST" action="create.php" onsubmit="return validateForm()">
                 <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
@@ -173,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="form-group">
                         <label>Motivo</label>
-                        <textarea name="reason" placeholder="Explique el motivo de la corrección..." required><?= htmlspecialchars($_POST['reason'] ?? ($prefill['rectificationReason']??'')) ?></textarea>
+                        <textarea name="reason" placeholder="Explique el motivo de la corrección..."><?= htmlspecialchars($_POST['reason'] ?? ($prefill['rectificationReason']??'')) ?></textarea>
                     </div>
                 </div>
 

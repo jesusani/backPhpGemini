@@ -57,6 +57,9 @@ class InvoiceController {
         }
 
         $input = $this->injectedInput ?? json_decode(file_get_contents('php://input'), true);
+        
+        file_put_contents(__DIR__ . '/../../debug_vts.log', date('Y-m-d H:i:s') . " Register Input: " . print_r($input, true) . "\n", FILE_APPEND);
+
         if (!$input) {
             http_response_code(400);
             echo json_encode(['error' => 'Invalid JSON']);
@@ -99,6 +102,7 @@ class InvoiceController {
             $result = $this->service->registerInvoice($input, $meta);
             echo json_encode($result);
         } catch (Exception $e) {
+            file_put_contents(__DIR__ . '/../../debug_vts.log', date('Y-m-d H:i:s') . " Register Error: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage()]);
         }

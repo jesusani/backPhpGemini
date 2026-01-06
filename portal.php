@@ -6,6 +6,12 @@ EnvLoader::load(__DIR__ . '/.env');
 require_once __DIR__ . '/controllers/InvoiceController.php';
 require_once __DIR__ . '/utils/Security.php';
 
+$issuer_name = $_ENV['ISSUER_NAME'];
+$issuer_cif = $_ENV['ISSUER_CIF'];
+$issuer_address = $_ENV['ISSUER_ADDRESS'];
+$issuer_city = $_ENV['ISSUER_CITY'];
+$issuer_email = $_ENV['ISSUER_EMAIL'];
+
 $id = $_GET['id'] ?? null;
 $sign = $_GET['s'] ?? '';
 
@@ -244,8 +250,8 @@ $data = json_decode($invoice['entry_data'], true);
                      <img src="/jesus/everest2026/imagenes/logoeve.jpg" alt="Logo" width="120" style="border-radius:10px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); object-fit: contain;">
                      <div style="flex: 1; text-align: center; padding-left: 20px;">
                         <h1 style="margin:0; font-size:28px; color:#fff; letter-spacing:-0.5px;">Portal de Facturación Electrónica</h1>
-                        <h2 style="color:var(--text-secondary); font-size:14px; margin: 5px 0;"><strong>FISIOTERAPIA EVEREST, S.L.</strong> | CIF: B87715025</h2>
-                        <p style="color:var(--text-secondary); font-size:12px; opacity:0.8; margin: 0;">Pza. Valencia 5 (esq. C/Barcelona 9) - Móstoles</p>
+                        <h2 style="color:var(--text-secondary); font-size:14px; margin: 5px 0;"><strong><?php echo $issuer_name; ?></strong> | CIF: <?php echo $issuer_cif; ?></h2>
+                        <p style="color:var(--text-secondary); font-size:12px; opacity:0.8; margin: 0;"><?php echo $issuer_address; ?> - <?php echo $issuer_city; ?> - <?php echo $issuer_email; ?></p>
                      </div>
                 </div>
         </div>

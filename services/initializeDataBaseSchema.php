@@ -51,3 +51,15 @@
             die("Error de conexión/inicialización de DB: " . $e->getMessage());
         }
     }
+
+    function resetDatabaseSchema()
+    {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $db->exec("DROP TABLE IF EXISTS vts_ledger");
+            initializeDatabaseSchema();
+            return true;
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
