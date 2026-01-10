@@ -61,4 +61,15 @@ class LedgerModel {
         $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function getLastIdByYear($year) {
+        // SQLite uses strftime or substr for dates stored as strings
+        // timestamp format is likely 'Y-m-d ...'
+        // We use LIKE for simplicity if format is YYYY-MM-DD...
+        $pattern = $year . '%';
+        $stmt = $this->conn->prepare("SELECT MAX(id) as max_id FROM vts_ledger WHERE timestamp LIKE :pattern");
+        $stmt->execute([':pattern' => $pattern]);
+        $result = $stmt->fetchColumn();
+        return $result ? (int)$result : 0;
+    }
 }

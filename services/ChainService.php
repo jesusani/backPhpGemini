@@ -96,4 +96,8 @@ class ChainService {
     public function getInvoiceById($id) {
         return $this->model->getById($id);
     }
+
+    public function getLastInvoiceIdByYear($year) {
+        return $this->model->getLastIdByYear($year);
+    }
 }

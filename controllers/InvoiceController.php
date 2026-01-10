@@ -41,6 +41,9 @@ class InvoiceController {
                 // Por ahora retornamos mensaje placeholder si no migramos todo verify.php
                 echo json_encode(['message' => 'Endpoint en refactorización (MVC). Use el endpoint clásico por ahora si falla.']);
                 break;
+            case 'last_invoice_number':
+                $this->lastInvoiceNumber();
+                break;
             default:
                 http_response_code(404);
                 echo json_encode(['error' => 'Acción no encontrada']);
@@ -209,5 +212,18 @@ class InvoiceController {
         
         echo json_encode($invoice, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
+    }
+
+    private function lastInvoiceNumber() {
+        $year = $_GET['year'] ?? date('Y');
+        // Simple security check if needed, but this is a read-only op mostly
+        
+        try {
+            $lastId = $this->service->getLastInvoiceIdByYear($year);
+            echo json_encode(['success' => true, 'year' => $year, 'last_invoice_id' => $lastId]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
     }
 }
