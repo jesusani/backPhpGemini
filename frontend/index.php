@@ -63,7 +63,13 @@ try {
                     <h1>VTS VeriFactu</h1>
                     <span style="color:var(--text-secondary);">Sistema de Facturación Antifraude</span>
                 </div>
-                <a href="create.php" class="btn">+ Nueva Factura</a>
+                <div style="display:flex; gap:10px;">
+                    <a href="export.php?format=sql" class="btn" style="background-color: #2c3e50;">Exportar SQL</a>
+                    <a href="export.php?format=xml" class="btn" style="background-color: #e67e22;">Exportar XML</a>
+                    <a href="export.php?format=excel" class="btn" style="background-color: #27ae60;">Exportar Excel</a>
+                    <a href="export.php?format=pdf" class="btn" style="background-color: #c0392b;">Exportar PDF</a>
+                    <a href="create.php" class="btn">+ Nueva Factura</a>
+                </div>
             </div>
         </header>
 
