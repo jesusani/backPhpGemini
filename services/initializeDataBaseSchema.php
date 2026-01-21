@@ -43,6 +43,17 @@
                     machine TEXT NOT NULL,
                     signature_key TEXT NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS vts_events (
+                    id INTEGER PRIMARY KEY,
+                    event_type TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    details TEXT,
+                    timestamp TEXT NOT NULL,
+                    user_id TEXT NOT NULL,
+                    previous_hash CHAR(64) NOT NULL,
+                    current_hash CHAR(64) NOT NULL
+                );
             ");
             
             // echo " Tabla vts_ledger verificada/inicializada.";

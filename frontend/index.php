@@ -65,9 +65,11 @@ try {
                 </div>
                 <div style="display:flex; gap:10px;">
                     <a href="export.php?format=sql" class="btn" style="background-color: #2c3e50;">Exportar SQL</a>
+                    <a href="export.php?format=aeat" class="btn" style="background-color: #8e44ad;">Exportar AEAT</a>
                     <a href="export.php?format=xml" class="btn" style="background-color: #e67e22;">Exportar XML</a>
                     <a href="export.php?format=excel" class="btn" style="background-color: #27ae60;">Exportar Excel</a>
                     <a href="export.php?format=pdf" class="btn" style="background-color: #c0392b;">Exportar PDF</a>
+                    <a href="events_log.php" class="btn" style="background-color: #34495e;">Log Eventos</a>
                     <a href="create.php" class="btn">+ Nueva Factura</a>
                 </div>
             </div>

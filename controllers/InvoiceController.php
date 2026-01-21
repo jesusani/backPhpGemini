@@ -241,7 +241,16 @@ class InvoiceController {
         $format = $_GET['format'] ?? 'xml';
         $ledger = $this->service->getLedger();
 
-        if ($format === 'sql') {
+        if ($format === 'aeat') {
+            require_once __DIR__ . '/../services/AeatXmlGenerator.php';
+            header('Content-Type: text/xml');
+            header('Content-Disposition: attachment; filename="facturas_aeat_' . date('Y-m-d') . '.xml"');
+            
+            $generator = new AeatXmlGenerator();
+            $nif = $_ENV['ISSUER_NIT'] ?? 'B99999999'; // Fallback to placeholder
+            echo $generator->generateAltaFactuXml($ledger, $nif); 
+            exit;
+        } elseif ($format === 'sql') {
             header('Content-Type: application/sql');
             header('Content-Disposition: attachment; filename="facturas_vts_' . date('Y-m-d') . '.sql"');
             

@@ -1,5 +1,7 @@
 # Security
 .env
+config/certs/
+
 
 # Database
 *.sqlite
