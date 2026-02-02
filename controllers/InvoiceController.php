@@ -285,7 +285,8 @@ class InvoiceController {
             }
             
             echo $xml->asXML();
-        } elseif ($format === 'excel') {
+
+        } elseif ($format === 'excel') { //EXPORTAR A EXCEL
             header('Content-Type: text/csv; charset=utf-8');
             header('Content-Disposition: attachment; filename="facturas_vts_' . date('Y-m-d') . '.csv"');
             
@@ -294,16 +295,67 @@ class InvoiceController {
             
             $output = fopen('php://output', 'w');
             
-            // Headers
-            if (!empty($ledger)) {
-                // Use semicolon for Spanish Excel compatibility
-                fputcsv($output, array_keys($ledger[0]), ';');
+            // Definir encabezados personalizados para las columnas
+            $headers = [
+                'ID Registro',
+                'Fecha Registro',
+                'Hash Actual',
+                'Hash Anterior',
+                'ID Factura',
+                'Tipo',
+                'Concepto',
+                'Importe',
+                'NIF Receptor',
+                'Nombre Receptor',
+                'Nombre Fisioterapeuta',
+                'Tipo de Pago',
+                'ID Fisioterapeuta',
+                'Fecha Cita',
+                'Hora Cita',
+                'Usuario',
+                'Máquina',
+                'ID Factura Original',
+                'Razón Rectificación',
+                'Firma'
+            ];
+            
+            // Escribir encabezados
+            fputcsv($output, $headers, ';');
+            
+            // Procesar cada registro
+            foreach ($ledger as $row) {
+                // Decodificar entry_data
+                $entryData = json_decode($row['entry_data'], true);
+                
+                // Preparar fila con datos extraídos
+                $csvRow = [
+                    $row['id'] ?? '',
+                    $row['timestamp'] ?? '',
+                    $row['current_hash'] ?? '',
+                    $row['previous_hash'] ?? '',
+                    $entryData['id'] ?? '',
+                    $entryData['type'] ?? '',
+                    $entryData['concept'] ?? '',
+                    $entryData['amount'] ?? '',
+                    $entryData['recipientNIF'] ?? ($row['recipient_nif'] ?? ''),
+                    $entryData['recipientName'] ?? ($row['recipient_name'] ?? ''),
+                    $entryData['nombrefisio'] ?? ($row['nombrefisio'] ?? ''),
+                    $entryData['tipopago'] ?? ($row['tipopago'] ?? ''),
+                    $entryData['idfisio'] ?? ($row['idfisio'] ?? ''),
+                    $entryData['fechacita'] ?? '',
+                    $entryData['horacita'] ?? '',
+                    $entryData['userId'] ?? ($row['user_id'] ?? ''),
+                    $entryData['machine'] ?? ($row['machine_id'] ?? ''),
+                    $entryData['originalInvoiceId'] ?? ($row['original_invoice_id'] ?? ''),
+                    $entryData['rectificationReason'] ?? ($row['rectification_reason'] ?? ''),
+                    $row['signature_proof'] ?? ''
+                ];
+                
+                fputcsv($output, $csvRow, ';');
             }
             
-            foreach ($ledger as $row) {
-                fputcsv($output, $row, ';');
-            }
             fclose($output);
+
         } elseif ($format === 'pdf') {
             // PDF Generation using Dompdf
             $options = new Options();
@@ -324,18 +376,31 @@ class InvoiceController {
             $html .= '<p>Generado el: ' . date('d/m/Y H:i:s') . '</p>';
             $html .= '<table><thead><tr>
                         <th>ID</th>
-                        <th>Fecha</th>
-                        <th>Concepto</th>
-                        <th>Importe</th>
+                        <th>Fecha</th> 
                         <th>NIF Recip.</th>
+                        <th>Nombre Recip.</th>
+                        <th>Importe</th>
+                        <th>Concepto</th>
+                        <th>Tipo de Pago</th>
+                        <th>Fisio</th>
                       </tr></thead><tbody>';
                       
+            $totalAmount = 0; // Variable para acumular el total
+            
             foreach ($ledger as $row) {
                 $meta = json_decode($row['entry_data'], true);
                 $concept = $meta['concept'] ?? 'N/A';
-                $amount = number_format((float)($meta['amount'] ?? 0), 2);
+                $type = $meta['type'] ?? 'N/A';
+                $recipientName = $meta['recipientName'] ?? 'N/A';
+                $amountValue = (float)($meta['amount'] ?? 0);
+                $amount = number_format($amountValue, 2);
                 $nif = $row['recipient_nif'] ?? '';
                 $date = date('d/m/Y', strtotime($row['timestamp']));
+                $fisio = $meta['nombrefisio'] ?? 'N/A';
+                $tipopago = $meta['tipopago'] ?? 'N/A';
+                
+                // Acumular total
+                $totalAmount += $amountValue;
                 
                 // Truncate overly long concepts for PDF
                 if (strlen($concept) > 50) $concept = substr($concept, 0, 47) . '...';
@@ -343,11 +408,23 @@ class InvoiceController {
                 $html .= "<tr>
                             <td>{$row['id']}</td>
                             <td>{$date}</td>
-                            <td>" . htmlspecialchars($concept) . "</td>
-                            <td style='text-align:right'>{$amount} €</td>
                             <td>" . htmlspecialchars($nif) . "</td>
+                            <td>" . htmlspecialchars($recipientName) . "</td>
+                            <td style='text-align:right'>{$amount} €</td>
+                            <td>" . htmlspecialchars($concept) . "</td>
+                            <td>" . htmlspecialchars($tipopago) . "</td>
+                            <td>" . htmlspecialchars($fisio) . "</td>
                           </tr>";
             }
+            
+            // Agregar fila de total
+            $totalFormatted = number_format($totalAmount, 2);
+            $html .= "<tr style='background-color: #e8f4f8; font-weight: bold;'>
+                        <td colspan='4' style='text-align:right; padding-right: 10px;'>TOTAL:</td>
+                        <td style='text-align:right; font-size: 11pt;'>{$totalFormatted} €</td>
+                        <td colspan='3'></td>
+                      </tr>";
+            
             $html .= '</tbody></table></body></html>';
             
             $dompdf->loadHtml($html);

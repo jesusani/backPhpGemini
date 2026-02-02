@@ -39,6 +39,9 @@ class ChainService {
             'machine' => 'PHP_VTS_SERVER_1',
             'previousHash' => $previousHash,
             'signatureKey' => $_ENV['VTS_SECRET_KEY'] ?? 'DEV_KEY_DEFAULT',
+            'nombrefisio' => $inputData['nombrefisio'] ?? null,
+            'tipopago' => $inputData['tipopago'] ?? null,
+            'idfisio' => $inputData['idfisio'] ?? null,
             // Agregamos campos extra si se requieren en el JSON hasheado
         ];
 
@@ -57,13 +60,19 @@ class ChainService {
             'user_id' => $userId,
             'recipient_nif' => $metadata['recipientNIF'],
             'recipient_name' => $metadata['recipientName'],
+            'fechacita' => $metadata['fechacita'],
+            'horacita' => $metadata['horacita'],
+            'amount' => $metadata['amount'],
             'machine_id' => $metadata['machine'],
             'signature_proof' => $signatureProof,
             'rectification_reason' => $metadata['rectificationReason'],
             'original_invoice_id' => $metadata['originalInvoiceId'],
             'message' => 'Registro Exitoso',
             'machine' => $metadata['machine'],
-            'signature_key' => $metadata['signatureKey']
+            'signature_key' => $metadata['signatureKey'],
+            'nombrefisio' => $metadata['nombrefisio'],
+            'tipopago' => $metadata['tipopago'],
+            'idfisio' => $metadata['idfisio']
         ];
 
         if ($this->model->createEntry($dbData)) {

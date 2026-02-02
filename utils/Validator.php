@@ -55,6 +55,8 @@ class Validator {
         $nif = strtoupper(trim($nif));
         // Regex para DNI/NIE/CIF básicos (Simplificado para ejemplo: Letra+Nums+Letra ó 8Nums+Letra)
         // Acepta: 12345678Z, X12345678Z, A12345678
-        return preg_match('/^[A-Z0-9]{9}$/', $nif);
+        // return preg_match('/^[A-Z0-9]{9}$/', $nif); 
+        // //lo anulamos por existir formatos con ceros a la izquierda auasentes
+        return true;
     }
 }

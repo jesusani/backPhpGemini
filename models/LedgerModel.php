@@ -22,9 +22,9 @@ class LedgerModel {
     public function createEntry($data) {
         $sql = "INSERT INTO vts_ledger 
                 (id, current_hash, previous_hash, entry_data, timestamp, invoice_id, user_id, recipient_nif, recipient_name, machine_id, signature_proof,
-                 rectification_reason, original_invoice_id, message, machine, signature_key)
+                 rectification_reason, original_invoice_id, message, machine, signature_key, nombrefisio, tipopago, idfisio, fechacita, horacita)
                 VALUES (:id, :current_hash, :previous_hash, :entry_data, :timestamp, :invoice_id, :user_id, :recipient_nif, :recipient_name, :machine_id, :signature_proof,
-                 :rectification_reason, :original_invoice_id, :message, :machine, :signature_key)";
+                 :rectification_reason, :original_invoice_id, :message, :machine, :signature_key, :nombrefisio, :tipopago, :idfisio, :fechacita, :horacita)";
         
         $stmt = $this->conn->prepare($sql);
         
@@ -39,6 +39,11 @@ class LedgerModel {
             ':user_id' => $data['user_id'],
             ':recipient_nif' => $data['recipient_nif'] ?? 'UNKNOWN',
             ':recipient_name' => $data['recipient_name'] ?? 'UNKNOWN',
+            ':nombrefisio' => $data['nombrefisio'] ?? 'UNKNOWN',
+            ':tipopago' => $data['tipopago'] ?? 'UNKNOWN',
+            ':idfisio' => $data['idfisio'] ?? 'UNKNOWN',
+            ':fechacita' => $data['fechacita'] ?? 'UNKNOWN',
+            ':horacita' => $data['horacita'] ?? 'UNKNOWN',
             ':machine_id' => $data['machine_id'],
             ':signature_proof' => $data['signature_proof'],
             ':rectification_reason' => $data['rectification_reason'] ?? 'N/A',
